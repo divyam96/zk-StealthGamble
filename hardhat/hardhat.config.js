@@ -8,7 +8,7 @@ require("hardhat-gas-reporter");
 // To export your private key from Metamask, open Metamask and
 // go to Account Details > Export Private Key
 // Be aware of NEVER putting real Ether into testing accounts
-const HARMONY_PRIVATE_KEY = "insert private key here";
+const HARMONY_PRIVATE_KEY = "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
 
 module.exports = {
     solidity: {

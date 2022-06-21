@@ -13,9 +13,8 @@ include "./decrypt.circom";
 // Prove that the revealed secret and value correspond to the blinded bid
 template ValidateOdds (nBids) {
     // blindedBidsChoices[i] is an EDcH encrypted value of [bid, choice]
-    signal input blindedBidsChoices[nBids][3];
+    // signal input blindedBidsChoices[nBids][3];
 
-    signal input depositCurrent;
     signal input depositMin;
     signal input minBid;
 
@@ -27,15 +26,15 @@ template ValidateOdds (nBids) {
     signal input bidsChoices[nBids][2];
 
     // shared keys for edsa decryption
-    signal input sharedKeys[nBids];
+    // signal input sharedKeys[nBids];
 
     // signal output highestBid[2];
     signal output odds[2];
     signal output bidsWithValidityStatus[nBids];
 
-    component decryptBidChoice[nBids];
+    // component decryptBidChoice[nBids];
     component adder[nBids];
-    component EqComparator[nBids][5];
+    // component EqComparator[nBids][5];
     component andGate[nBids];
     component cond0Mux[nBids];
     component cond1Mux[nBids];
@@ -62,27 +61,27 @@ template ValidateOdds (nBids) {
 
     for (var i = 0; i < nBids; i++) {
 
-          decryptBidChoice[i] = Decrypt(2);
-          decryptBidChoice[i].message[0] <== blindedBidsChoices[i][0];
-          decryptBidChoice[i].message[1] <== blindedBidsChoices[i][1];
-          decryptBidChoice[i].message[2] <== blindedBidsChoices[i][2];
+          // decryptBidChoice[i] = Decrypt(2);
+          // decryptBidChoice[i].message[0] <== blindedBidsChoices[i][0];
+          // decryptBidChoice[i].message[1] <== blindedBidsChoices[i][1];
+          // decryptBidChoice[i].message[2] <== blindedBidsChoices[i][2];
 
-          decryptBidChoice[i].private_key <== sharedKeys[i];
+          // decryptBidChoice[i].private_key <== sharedKeys[i];
 
-          var decryptedBid = 0; //decryptBidChoice[i].out[0];
-          var decryptedChoice = 0; //decryptBidChoice[i].out[1];
-
-
-          EqComparator[i][0] = IsEqual();
-          EqComparator[i][0].in[0] <== decryptedBid;
-          EqComparator[i][0].in[1] <== bidsChoices[i][0];
-
-          EqComparator[i][1] = IsEqual();
-          EqComparator[i][1].in[0] <== decryptedChoice;
-          EqComparator[i][1].in[1] <== bidsChoices[i][1];
+          // var decryptedBid = 0; //decryptBidChoice[i].out[0];
+          // var decryptedChoice = 0; //decryptBidChoice[i].out[1];
 
 
-          bidsWithValidityStatus[i] <== EqComparator[i][0].out * EqComparator[i][1].out;
+          // EqComparator[i][0] = IsEqual();
+          // EqComparator[i][0].in[0] <== decryptedBid;
+          // EqComparator[i][0].in[1] <== bidsChoices[i][0];
+
+          // EqComparator[i][1] = IsEqual();
+          // EqComparator[i][1].in[0] <== decryptedChoice;
+          // EqComparator[i][1].in[1] <== bidsChoices[i][1];
+
+
+          // bidsWithValidityStatus[i] <== EqComparator[i][0].out * EqComparator[i][1].out;
 
           cond0Mux[i] = Mux1();
           cond0Mux[i].c[0] <== bidsChoices[i][0];
@@ -106,5 +105,3 @@ template ValidateOdds (nBids) {
   odds[1] <== choice_1_sum;
 
 }
-
-component main { public [ bidsChoices, minBid, depositMin, depositCurrent] } = ValidateOdds(4);
