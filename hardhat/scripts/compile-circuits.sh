@@ -15,7 +15,7 @@ fi
 echo "Compiling: circuit..."
 
 # compile circuit
-circom validateOdds.circom --r1cs --wasm --sym -o build
+circom validateOdds_main.circom --r1cs --wasm --sym -o build
 snarkjs r1cs info build/validateOdds.r1cs
 
 # Start a new zkey and make a contribution
