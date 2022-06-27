@@ -8,7 +8,7 @@ import {
   genEcdhSharedKey,
   buf2Bigint,
   EdDSA
-} from '../index';
+} from '../cryptocore';
 
 import {Scalar} from "ffjavascript";
 
@@ -18,6 +18,8 @@ const ff = require('ffjavascript')
 const chai = require("chai");
 const path = require("path");
 
+const { ethers } = require("hardhat");
+const { groth16 } = require("snarkjs");
 const wasm_tester = require("circom_tester").wasm;
 
 const buildMimc7 = require("circomlibjs").buildMimc7;
@@ -161,6 +163,8 @@ describe('ECDH test', () => {
           "betsChoices": decryptedBetsChoices,
           "minBet": 5n,
           "depositMin": 100n,
+          "odds0": 110n,
+          "odds1": 120n
       });
       // console.log("Input *****", INPUT);
       const witness = await circuit.calculateWitness(INPUT, true);
@@ -179,4 +183,51 @@ describe('ECDH test', () => {
   });
 
 
+});
+
+describe("Verifier Contract", function () {
+    let Verifier;
+    let verifier;
+
+    beforeEach(async function () {
+        Verifier = await ethers.getContractFactory("OddsVerifier");
+        verifier = await Verifier.deploy();
+        await verifier.deployed();
+    });
+
+    it("Should return true for correct proofs", async function () {
+
+        const BetsChoices = [[20n, 0n], [30n, 1n], [40n, 0n],
+                             [20n, 0n], [30n, 1n], [80n, 0n],
+                             [30n, 1n], [40n, 2n], [15n, 0n],
+                             [20n, 1n]];
+        const INPUT = stringifyBigInts({
+            "betsChoices": BetsChoices,
+            "minBet": 5n,
+            "depositMin": 100n,
+            "odds0": 135n,
+            "odds1": 190n
+        });
+
+        // console.log(INPUT);
+
+        const { proof, publicSignals } = await groth16.fullProve(INPUT, "circuits/build/validateOdds_main_js/validateOdds_main.wasm","circuits/build/validateOdds_final.zkey");
+
+        const calldata = await groth16.exportSolidityCallData(proof, publicSignals);
+
+        const argv = calldata.replace(/["[\]\s]/g, "").split(',').map(x => BigInt(x).toString());
+
+        const a = [argv[0], argv[1]];
+        const b = [[argv[2], argv[3]], [argv[4], argv[5]]];
+        const c = [argv[6], argv[7]];
+        const Input = argv.slice(8);
+        expect(await verifier.verifyProof(a, b, c, Input)).toEqual(true);
+    });
+    it("Should return false for invalid proof", async function () {
+        let a = [0, 0];
+        let b = [[0, 0], [0, 0]];
+        let c = [0, 0];
+        let d = [0, 0, 0, 0 ,0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        expect(await verifier.verifyProof(a, b, c, d)).toEqual(false);
+    });
 });

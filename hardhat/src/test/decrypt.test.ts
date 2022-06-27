@@ -8,7 +8,7 @@ import {
   genEcdhSharedKey,
   buf2Bigint,
   EdDSA
-} from '../index';
+} from '../cryptocore';
 
 import {Scalar} from "ffjavascript";
 

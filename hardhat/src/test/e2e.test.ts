@@ -9,10 +9,11 @@ import {
   buf2Bigint,
   Ciphertext,
   EdDSA
-} from '../index';
+} from '../cryptocore';
 
 import {Scalar} from "ffjavascript";
 
+const { groth16 } = require("snarkjs");
 const { ethers } = require("hardhat");
 import { utils } from "ethers"
 const ff = require('ffjavascript')
@@ -280,7 +281,7 @@ describe('ECDH test', () => {
       }
 
     }
-    console.log(rewardAddrs, rewardAmount);
+    console.log("Reward Distribution: ", rewardAddrs, rewardAmount);
     await contract.setRewards(rewardAddrs, rewardAmount);
     await contract.distributeRewards();
 

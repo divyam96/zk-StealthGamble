@@ -10,7 +10,7 @@ import {
   genEcdhSharedKey,
   buf2Bigint,
   EdDSA
-} from '../index';
+} from '../cryptocore';
 
 const buildMimc7 = require("circomlibjs").buildMimc7;
 

@@ -24,7 +24,8 @@ template ValidateOdds (nBets) {
 
     // bet and choice values
     signal input betsChoices[nBets][2];
-
+    signal input odds0;
+    signal input odds1;
     // shared keys for edsa decryption
     // signal input sharedKeys[nBets];
 
@@ -98,9 +99,11 @@ template ValidateOdds (nBets) {
     }
 
 
-    log(choice_0_sum);
-    log(choice_1_sum);
+  // log(choice_0_sum);
+  // log(choice_1_sum);
 
+  odds0 === choice_0_sum;
+  odds1 === choice_1_sum;
   odds[0] <== choice_0_sum;
   odds[1] <== choice_1_sum;
 
