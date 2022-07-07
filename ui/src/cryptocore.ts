@@ -1,12 +1,21 @@
+import {ethers} from 'ethers';
 import assert from 'assert';
-import * as crypto from 'crypto';
-import * as ethers from 'ethers';
-import { buildBabyjub, buildEddsa } from 'circomlibjs';
-const buildMimc7 = require("circomlibjs").buildMimc7;
+
+import { buildEddsa, buildMimc7, buildBabyjub } from 'circomlibjs'
+import {utils, Scalar} from 'ffjavascript';
+
+// console.log("Hello")
+// console.log(buildEddsa);
+// console.log(buildMimc7);
+// console.log(buildBabyjub);
+// console.log(utils);
+// console.log(Scalar);
+
+const crypto  = require('crypto-browserify');
 
 const createBlakeHash = require('blake-hash');
 
-const ff = require('ffjavascript');
+
 
 type PrivKey = bigint;
 type PubKey = Uint8Array[];
@@ -58,7 +67,7 @@ const NOTHING_UP_MY_SLEEVE =
   ) % SNARK_FIELD_SIZE;
 
 
-const fromHexString = (hexString) =>
+const fromHexString = (hexString: String) =>
     Uint8Array.from(hexString.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)));
 
 /*
@@ -117,7 +126,7 @@ const buf2Bigint = (buf: ArrayBuffer | TypedArray | Buffer): bigint => {
 };
 
 const buildEddsaModule = async (): Promise<EdDSA> => {
-  return buildEddsa();
+  return  buildEddsa();
 };
 
 /*
@@ -171,8 +180,8 @@ const formatPrivKeyForBabyJub = (eddsa: any, privKey: PrivKey) => {
       .digest()
       .slice(0, 32),
   );
-  const s = ff.utils.leBuff2int(sBuff);
-  return ff.Scalar.shr(s, 3);
+  const s = utils.leBuff2int(sBuff);
+  return Scalar.shr(s, 3);
 };
 
 /*
@@ -243,14 +252,8 @@ const encrypt = async (
   sharedKey: EcdhSharedKey,
 ): Promise<Ciphertext> => {
   const mimc7 = await buildMimc7();
-  // [assignment] generate the IV, use Mimc7 to hash the shared key with the IV, then encrypt the plain text
-  // const iv = mimc7.getIV(plaintext);
-  // console.log("iv", iv);
   const iv = buf2Bigint(mimc7.multiHash(plaintext, BigInt(0)));
-  // console.log("iv2", iv);
 
-  // console.log("***********");
-  // console.log(plaintext);
   const ciphertext: Ciphertext = {
         iv,
         data: plaintext.map((e: bigint, i: number): bigint => {
@@ -276,16 +279,10 @@ const decrypt = async (
   ciphertext: Ciphertext,
   sharedKey: EcdhSharedKey,
 ): Promise<Plaintext> => {
-  // [assignment] use Mimc7 to hash the shared key with the IV, then descrypt the ciphertext
   const mimc7 = await buildMimc7();
 
   const plaintext: Plaintext = ciphertext.data.map(
         (e: bigint, i: number): bigint => {
-            // console.log("sharedKey", sharedKey)
-            // console.log("buf2Bigint sharedKey", buf2Bigint(sharedKey))
-            // console.log("sharedKey, iv, i", buf2Bigint(sharedKey), BigInt(ciphertext.iv), BigInt(i))
-            // console.log("e", BigInt(e))
-            // console.log("mimc7 val", mimc7.F.toObject(mimc7.hash(buf2Bigint(sharedKey), BigInt(ciphertext.iv) + BigInt(i), 91)))
             return BigInt(e) - mimc7.F.toObject(mimc7.hash(sharedKey, BigInt(ciphertext.iv) + BigInt(i), 91))
         }
     )

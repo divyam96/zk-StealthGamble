@@ -38,7 +38,8 @@ module.exports = {
         deployer: 0,
     },
     paths: {
-        deploy: "deploy",
+        deploy_devnet: "deploy_devnet",
+        deploy_mainnet: "deploy_mainnet",
         deployments: "deployments",
     },
     mocha: {

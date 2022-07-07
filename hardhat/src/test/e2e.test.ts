@@ -8,6 +8,7 @@ import {
   genEcdhSharedKey,
   buf2Bigint,
   Ciphertext,
+  fromHexString,
   EdDSA
 } from '../cryptocore';
 
@@ -45,13 +46,13 @@ const getSignalByName = (
 
 type Plaintext = bigint[];
 
-describe('ECDH test', () => {
+describe('e2e test', () => {
   let eddsa: EdDSA;
   beforeAll(async () => {
     eddsa = await buildEddsaModule();
   }, 150000);
 
-  it("Test if validate odds is computing odds correctly", async () => {
+  it("Encrypt, Decrypt and Disribute Rewards", async () => {
 
       const mimc7 = buildMimc7();
       const {privKey: bookmakerPrivKey, pubKey: bookmakerPubKey} = genKeypair(eddsa);
@@ -61,19 +62,46 @@ describe('ECDH test', () => {
       const {privKey: user4PrivKey, pubKey: user4PubKey} = genKeypair(eddsa);
       const {privKey: user5PrivKey, pubKey: user5PubKey} = genKeypair(eddsa);
 
+      const GambleHouse = await ethers.getContractFactory("GambleHouse");
+
+      var nowTs = Math.floor(Date.now() / 1000);
+      var mockStartTime = nowTs + (60*60);
+      var mockEndTime = nowTs + (24*60*60);
+      var fixId = 123;
+      var team0 = "Team A";
+      var team1 = "Team B";
+      var league = "Champions League";
+      var venue = "Bangalore";
+
+      var bookmakerPubKeyHex1 = Buffer.from(bookmakerPubKey[0]).toString('hex');
+      var bookmakerPubKeyHex2 = Buffer.from(bookmakerPubKey[1]).toString('hex');
+
+      const [owner, addr1, addr2, addr3, addr4, addr5] = await ethers.getSigners();
+      const addrs = [addr1, addr2, addr3, addr4, addr5]
+
+      const contract = await GambleHouse.deploy(owner.address,
+                                                bookmakerPrivKey,
+                                                bookmakerPubKeyHex1,
+                                                bookmakerPubKeyHex2,
+                                                mockStartTime,
+                                                mockEndTime,
+                                                fixId,
+                                                team0,
+                                                team1,
+                                                league,
+                                                venue
+                                               );
+      const bookmakerKeys = await contract.getBookmakerKeys();
+      var retBookmakerPubKey = [fromHexString(bookmakerKeys[1]),
+                                fromHexString(bookmakerKeys[2])];
 
       // Encryption
       const ecdhSharedKeyEncrypt1 = await genEcdhSharedKey({
         eddsa,
         privKey: user1PrivKey,
-        pubKey: bookmakerPubKey,
+        pubKey: retBookmakerPubKey,
       });
-      // decrypting using bookmaker's private key + user pubkey
-      const ecdhBookmakerUser1SharedKey = await genEcdhSharedKey({
-        eddsa,
-        privKey: bookmakerPrivKey,
-        pubKey: user1PubKey,
-      });
+
       const user1BetChoice: bigint[] = [20n, 0n];
       const user1Ciphertext = await encrypt(user1BetChoice, ecdhSharedKeyEncrypt1);
       console.log("User 1 Bet, Choice", user1BetChoice);
@@ -81,14 +109,9 @@ describe('ECDH test', () => {
       const ecdhSharedKeyEncrypt2 = await genEcdhSharedKey({
         eddsa,
         privKey: user2PrivKey,
-        pubKey: bookmakerPubKey,
+        pubKey: retBookmakerPubKey,
       });
-      // decrypting using bookmaker's private key + user pubkey
-      const ecdhBookmakerUser2SharedKey = await genEcdhSharedKey({
-        eddsa,
-        privKey: bookmakerPrivKey,
-        pubKey: user2PubKey,
-      });
+
       const user2BetChoice: bigint[] = [30n, 1n];
       const user2Ciphertext = await encrypt(user2BetChoice, ecdhSharedKeyEncrypt2);
       console.log("User 2 Bet, Choice", user2BetChoice);
@@ -96,14 +119,10 @@ describe('ECDH test', () => {
       const ecdhSharedKeyEncrypt3 = await genEcdhSharedKey({
         eddsa,
         privKey: user3PrivKey,
-        pubKey: bookmakerPubKey,
+        pubKey: retBookmakerPubKey,
       });
-      // decrypting using bookmaker's private key + user pubkey
-      const ecdhBookmakerUser3SharedKey = await genEcdhSharedKey({
-        eddsa,
-        privKey: bookmakerPrivKey,
-        pubKey: user3PubKey,
-      });
+
+
       const user3BetChoice: bigint[] = [30n, 0n];
       const user3Ciphertext = await encrypt(user3BetChoice, ecdhSharedKeyEncrypt3);
       console.log("User 3 Bet, Choice", user3BetChoice);
@@ -111,14 +130,10 @@ describe('ECDH test', () => {
       const ecdhSharedKeyEncrypt4 = await genEcdhSharedKey({
         eddsa,
         privKey: user4PrivKey,
-        pubKey: bookmakerPubKey,
+        pubKey: retBookmakerPubKey,
       });
-      // decrypting using bookmaker's private key + user pubkey
-      const ecdhBookmakerUser4SharedKey = await genEcdhSharedKey({
-        eddsa,
-        privKey: bookmakerPrivKey,
-        pubKey: user4PubKey,
-      });
+
+
       const user4BetChoice: bigint[] = [60n, 0n];
       const user4Ciphertext = await encrypt(user4BetChoice, ecdhSharedKeyEncrypt4);
       console.log("User 4 Bet, Choice", user4BetChoice);
@@ -126,51 +141,41 @@ describe('ECDH test', () => {
       const ecdhSharedKeyEncrypt5= await genEcdhSharedKey({
         eddsa,
         privKey: user5PrivKey,
-        pubKey: bookmakerPubKey,
+        pubKey: retBookmakerPubKey,
       });
-      // decrypting using bookmaker's private key + user pubkey
-      const ecdhBookmakerUser5SharedKey = await genEcdhSharedKey({
-        eddsa,
-        privKey: bookmakerPrivKey,
-        pubKey: user5PubKey,
-      });
+
+
       const user5BetChoice: bigint[] = [90n, 1n];
       const user5Ciphertext = await encrypt(user5BetChoice, ecdhSharedKeyEncrypt5);
       console.log("User 5 Bet, Choice", user5BetChoice);
 
       const ciphertexts = [user1Ciphertext, user2Ciphertext, user3Ciphertext,
                            user4Ciphertext, user5Ciphertext];
-      const ecdhBookmakerSharedKeys = [ecdhBookmakerUser1SharedKey,
-                                       ecdhBookmakerUser2SharedKey,
-                                       ecdhBookmakerUser3SharedKey,
-                                       ecdhBookmakerUser4SharedKey,
-                                       ecdhBookmakerUser5SharedKey];
 
-     const [owner, addr1, addr2, addr3, addr4, addr5] = await ethers.getSigners();
+      const userPubKeys = [user1PubKey, user2PubKey, user3PubKey,
+                           user4PubKey, user5PubKey];
 
-     const addrs = [addr1, addr2, addr3, addr4, addr5]
-
-     const GambleHouse = await ethers.getContractFactory("GambleHouse");
-
-     var nowTs = Math.floor(Date.now() / 1000);
-     var mockStartTime = nowTs + (60*60);
-     var mockEndTime = nowTs + (24*60*60);
-
-     const contract = await GambleHouse.deploy(owner.address,
-                                               mockStartTime,
-                                               mockEndTime);
      const depositAmount = ethers.utils.formatEther("100");
 
      for(let i=0; i<5; i++){
+
+       var userPubKeyHex1 = Buffer.from(userPubKeys[i][0]).toString('hex');
+       var userPubKeyHex2 = Buffer.from(userPubKeys[i][1]).toString('hex');
+
        await contract.connect(addrs[i])
        .deposit(ciphertexts[i]['iv'],
                 ciphertexts[i]['data'][0],
                 ciphertexts[i]['data'][1],
+                userPubKeyHex1,
+                userPubKeyHex2,
                 {value: ethers.utils.parseEther(depositAmount.toString())});
      }
 
      const stateValues =  await contract.readParticipants();
      const contractCipherTexts: Ciphertext[] = [];
+
+     const retUserPubKeys: any[] = [];
+
      for(let i=0; i<5; i++){
            expect(stateValues[0][i]).toEqual(addrs[i].address);
            expect(ethers.utils.formatEther(stateValues[1][i])).toEqual(depositAmount);
@@ -181,8 +186,12 @@ describe('ECDH test', () => {
                            'data': [stateValues[3][i].toBigInt(), stateValues[4][i].toBigInt()]
                           };
            contractCipherTexts.push(temp_map);
+           var userPubKey = [fromHexString(stateValues[5][i]),
+                             fromHexString(stateValues[6][i])];
+           retUserPubKeys.push(userPubKey);
 
     }
+
 
     const choice0Bets: number[] = [];
     const choice1Bets: number[] = [];
@@ -194,7 +203,15 @@ describe('ECDH test', () => {
     const choice1Addrs: string[] = [];
 
     for(let i=0; i<5; i++){
-        var decryptedMessage = await decrypt(contractCipherTexts[i], ecdhBookmakerSharedKeys[i]);
+
+
+        var ecdhSharedKey = await genEcdhSharedKey({
+                                                  eddsa,
+                                                  privKey: bookmakerKeys[0].toBigInt(),
+                                                  pubKey: retUserPubKeys[i],
+                                                });
+
+        var decryptedMessage = await decrypt(contractCipherTexts[i], ecdhSharedKey);
         // console.log("decrypted via js", decryptedMessage);
         if(decryptedMessage[1] == 0n){
           choice0Bets.push(Number(decryptedMessage[0]));
@@ -210,7 +227,7 @@ describe('ECDH test', () => {
 
     const odds0 = choice0Bets.reduce((partialSum, a) => partialSum + a, 0);
     const odds1 = choice1Bets.reduce((partialSum, a) => partialSum + a, 0);
-    contract.updateOdds(odds0, odds1);
+    contract.updateOdds(odds0, odds1, 10);
     const gameInfoUpdated = await contract.getGameInfo();
 
     // Distribute Prizes
