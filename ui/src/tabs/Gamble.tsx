@@ -75,7 +75,7 @@ export default function Upload() {
            setTeam0(info_team0);
            setTeam1(info_team1);
            setLeague(info_league);
-           if(info_venue != "null, null"){
+           if(info_venue !== "null, null"){
               setVenue(info_venue);
            }
            setDate(date_str);
@@ -99,9 +99,8 @@ export default function Upload() {
         throw new Error("Cannot have more than 10 bets.");
       }
       else
-      {   if(BigInt(bet)<BigInt(minBet)){
-            throw new Error("Betting amount cannot be less than " + minBet);
-
+      {   if(BigInt(bet)<BigInt(minBet) || BigInt(bet)>99n) {
+            throw new Error("Betting amount cannot be grater than deposit i.e.100 and less than min Bet i.e. " + minBet);
           }
           const userBetChoice: bigint[] = [BigInt(bet), BigInt(choice)];
           console.log(userBetChoice);
@@ -166,6 +165,9 @@ export default function Upload() {
            Place Bets Privately
          </Typography>
          <Paper elevation={15}>
+         <Typography>
+         Game Details
+         </Typography>
           <Typography variant="h3" gutterBottom component="div">
            {league}
         </Typography>

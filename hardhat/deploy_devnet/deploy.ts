@@ -101,7 +101,6 @@ async function getFixtureResult(fixture_id){
 
 async function verifyOdds(verifier, INPUT){
 
-
   // console.log(INPUT);
 
   const { proof, publicSignals } = await groth16.fullProve(INPUT, "circuits/build/validateOdds_main_js/validateOdds_main.wasm","circuits/build/validateOdds_final.zkey");
@@ -114,7 +113,8 @@ async function verifyOdds(verifier, INPUT){
   const b = [[argv[2], argv[3]], [argv[4], argv[5]]];
   const c = [argv[6], argv[7]];
   const Input = argv.slice(8);
-  expect(await verifier.verifyProof(a, b, c, Input)).toEqual(true);
+
+  return await verifier.verifyProof(a, b, c, Input);
 
 
 }
@@ -185,23 +185,28 @@ async function distributeRewards(contract, verifier, fixture_id, participantCoun
 
   const retMinBet = await contract.getMinBet();
 
-  contract.refreshOdds(odds0, odds1, retMinBet.toNumber());
+  contract.updateOdds(odds0, odds1, retMinBet.toNumber());
 
   const winner = await getFixtureResult(fixture_id);
 
   const rewardAddrs: String[] = [];
   const rewardAmount: number[] = [];
 
-  if(participantCount === 10 && odds1!=0 && odds0!=0 && winner!=null){
-        const INPUT = stringifyBigInts({
-            "betsChoices": decryptedBetsChoices,
-            "minBet": 5n,
-            "depositMin": 100n,
-            "odds0": BigInt(odds0),
-            "odds1": BigInt(odds1)
-        });
+  var verified = false;
 
-        await verifyOdds(verifier, INPUT);
+  if (decryptedBetsChoices.length === 10){
+      const INPUT = stringifyBigInts({
+          "betsChoices": decryptedBetsChoices,
+          "minBet": 5n,
+          "depositMin": 100n,
+          "odds0": BigInt(odds0),
+          "odds1": BigInt(odds1)
+      });
+
+      verified = await verifyOdds(verifier, INPUT);
+  }
+
+  if(participantCount === 10 && odds1!=0 && odds0!=0 && winner!=null && verified){
 
         if (winner == 0){
 

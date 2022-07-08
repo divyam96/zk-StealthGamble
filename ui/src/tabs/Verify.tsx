@@ -39,7 +39,6 @@ export default function Upload() {
     const [error, setError] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
     const [Verifying, setVerifying] = useState(false);
-    const [age, setAge] = useState('');
 
     const handleChange = (event: SelectChangeEvent) => {
       setChoice(event.target.value);
