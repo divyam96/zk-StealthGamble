@@ -243,13 +243,14 @@ export default function Upload() {
               <br/><br/>2. Only whole integer bets are accepted.
               <br/><br/>3. Each player(i.e. Account) can participate only once
               and cannot withdraw a deposit once submitted.
-              <br/><br/>4. The betting period is 24-48hrs. Those who bet on the
-               day of the game will have a higher min Bet.
-              <br/><br/>5. Odds will be refreshed at the start of each day.
-              Min bet is increased with this refresh.
-              <br/><br/>6. Gas fees are not refunded and act as participation
-               fees. Amount equalling “Deposit-Bet-gasfees” will be returned to
-                each user at the end of the event along with wins(if any).
+              <br/><br/>4. The betting period is 24-48hrs.
+              <br/><br/>5. Odds will be refreshed every 6hrs.
+              Min bet is increased with this refresh to encourage early betting
+               with minimal bias.
+              <br/><br/>6.  Gas fees are not refunded and act as participation fees.
+                      <br/>- Amount equalling "Deposit - gasfees - Bet " will be returned participants that loose.
+                      <br/>- Amount equalling "Deposit - gasfees + reward" will be returned participants that win.
+                      <br/>- Amount equalling "Deposit - gasfees" will be returned to every participant incase it is a tie or violation of rules(ZKP failure).
               <br/><br/>7. Wins are distributed as per the proportion of stake
                of each winning participant in the winning pot. For example,
                 let's assume the winning pot has 250 ONE and the losing pot

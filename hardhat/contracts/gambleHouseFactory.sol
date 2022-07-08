@@ -4,9 +4,9 @@ pragma solidity >=0.7.0 <0.9.0;
 contract GambleHouseFactory {
 
 
-    address bookmaker;
-    address gambleHouseContract;
-    address verifierContract;
+    address bookmaker;// Keep track of bookmaker address
+    address gambleHouseContract; // Keep track of current betting session
+    address verifierContract;// Keep track of verifier address
 
 
     constructor(address _bookmaker, address _verifierContract)

@@ -21,6 +21,13 @@ const fetch = require('node-fetch');
 let eddsa: EdDSA;
 
 
+/**
+Update odds/pots to reflect latest data and increase min bet.
+
+@param {ethers.Contract} contract GambleHouse contract
+
+@returns boolean
+*/
 async function refreshOdds(contract){
 
     const bookmakerKeys = await contract.getBookmakerKeys();

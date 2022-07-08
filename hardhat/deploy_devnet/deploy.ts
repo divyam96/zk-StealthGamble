@@ -29,10 +29,14 @@ let eddsa: EdDSA;
 type Plaintext = bigint[];
 
 
-// const { ethers } = require("hardhat");
-// import { ethers } from "hardhat";
-const API_KEY_FOOTBALL = "";
 
+const API_KEY_FOOTBALL = ""; // key to query football.api-sports.com
+
+/**
+Function to query the football API and get information on a random game from the
+next day.
+@returns array
+*/
 async function getFixtureData(){
     // Get relevant info while deploying the contract
     const tomorrow  = new Date(); // The Date object returns today's timestamp
@@ -68,6 +72,13 @@ async function getFixtureData(){
 
 }
 
+/**
+Function to query the football API and get the result of the fixture for the
+ ongoing betting session
+
+@param {Int} fixture_id Unique ID for fixture given by API
+@returns array
+*/
 async function getFixtureResult(fixture_id){
 
     var data, gameDetails;
@@ -99,6 +110,15 @@ async function getFixtureResult(fixture_id){
 
 }
 
+/**
+Function to query the football API and get the result of the fixture for the
+ ongoing betting session
+
+@param {ethers.Contract} verifier ZKP verification contract
+@param {JSON} INPUT Json input for circuit.
+
+@returns boolean
+*/
 async function verifyOdds(verifier, INPUT){
 
   // console.log(INPUT);
@@ -119,6 +139,16 @@ async function verifyOdds(verifier, INPUT){
 
 }
 
+/**
+Function to compute pots, validate using ZKP and distribute the rewards.
+
+@param {ethers.Contract} contract ZKP verification contract
+@param {ethers.Contract} verifier ZKP verification contract
+@param {Int} fixture_id Unique Id to identify the game refrenced by ongoing betting session
+@param {Int} participantCount Count of participants in current betting session
+
+@returns boolean
+*/
 async function distributeRewards(contract, verifier, fixture_id, participantCount){
 
     const bookmakerKeys = await contract.getBookmakerKeys();
@@ -131,6 +161,7 @@ async function distributeRewards(contract, verifier, fixture_id, participantCoun
 
     const numParticipants = stateValues[0].length;
 
+    // Retrieve encrypted commitments and public kkey of participating users
     for(let i=0; i<numParticipants; i++){
           var temp_map: Ciphertext = {'iv': stateValues[2][i].toBigInt(),
                           'data': [stateValues[3][i].toBigInt(), stateValues[4][i].toBigInt()]
@@ -154,6 +185,7 @@ async function distributeRewards(contract, verifier, fixture_id, participantCoun
 
    const decryptedBetsChoices: Plaintext[] = [];
 
+   // decrypt values for participants to get their bets and choices
    for(let i=0; i<numParticipants; i++){
 
 
@@ -194,6 +226,7 @@ async function distributeRewards(contract, verifier, fixture_id, participantCoun
 
   var verified = false;
 
+  // Run ZKP to see if the bets are valid
   if (decryptedBetsChoices.length === 10){
       const INPUT = stringifyBigInts({
           "betsChoices": decryptedBetsChoices,
@@ -208,6 +241,8 @@ async function distributeRewards(contract, verifier, fixture_id, participantCoun
 
   if(participantCount === 10 && odds1!=0 && odds0!=0 && winner!=null && verified){
 
+        // Split pot of Away team among winners as per their proportion
+        // of stake in Home pot.
         if (winner == 0){
 
            for(let i=0; i<choice0Bets.length; i++){
@@ -229,6 +264,8 @@ async function distributeRewards(contract, verifier, fixture_id, participantCoun
 
         }
 
+        // Split pot of Home team among winners as per their proportion
+        // of stake in Away pot.
         else if (winner == 1){
 
            for(let i=0; i<choice1Bets.length; i++){
@@ -245,6 +282,7 @@ async function distributeRewards(contract, verifier, fixture_id, participantCoun
            }
         }
       }
+  // Return all deposits if there is no winner(tie, cancellation) or if ZKP fails
   else {
 
    for(let i=0; i<choice0Bets.length; i++){

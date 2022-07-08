@@ -4,6 +4,7 @@ pragma solidity >=0.7.0 <0.9.0;
 contract GambleHouse {
 
     struct EdsaCommitment {
+      // EDSA commitment compricing of iv value, encryptedd values of a participant's bet and choice.
       uint iv;
       uint data_bet;
       uint data_choice;
@@ -11,22 +12,22 @@ contract GambleHouse {
 
     struct Participant {
         uint depositAmount; // amount deposited by Participant
-        EdsaCommitment  blindedBetChoice;
-        bool participated;
-        string pubKey_1;
-        string pubKey_2;
+        EdsaCommitment  blindedBetChoice; // Hash commitment of participant bet and choice
+        bool participated; // Whether the participant has already participated in bet
+        string pubKey_1; // EDSA public key part 1
+        string pubKey_2; // EDSA public key part 2
     }
 
     struct GameInfo {
-        uint odds_0;
-        uint odds_1;
-        string team0;
-        string team1;
-        string league;
-        string venue;
-        uint fixture_id;
-        uint startTime;
-        uint endTime;
+        uint odds_0; // odds or pot amount backing home team
+        uint odds_1; // odds or pot amount backing away team
+        string team0; // name of home team
+        string team1;// name of away team
+        string league; // name of league
+        string venue; // Venue of game
+        uint fixture_id; // unique id to identify event
+        uint startTime; // Start of event
+        uint endTime; // endTime when we know for sure event is complete - Set at 300 mins post start time
     }
 
     error OnlyBookmaker(string message);
@@ -56,6 +57,8 @@ contract GambleHouse {
         _;
     }
 
+    /*Constructor to initalzie a game. Only the Bookmaker has access
+    to this event*/
     constructor(address _bookmaker, uint _bookmaker_priv_key,
        string memory _bookmaker_pub_key_1, string memory _bookmaker_pub_key_2,
        uint _start_time, uint _end_time, uint _fixture_id, string memory _team0,
@@ -78,9 +81,10 @@ contract GambleHouse {
           gameInfo.venue = _venue;
    }
 
+   /*Function to deposit hash commitmentsbets and deposits
+    into this betting contract*/
     function deposit(uint _iv, uint _data_bet, uint _data_choice,
        string memory _pub_key_1, string memory _pub_key_2) public payable  {
-
 
         if(participants[msg.sender].participated) revert("Already Participated");
         if(msg.sender == bookmaker) revert("Bookmaker cannot participate");
@@ -104,6 +108,8 @@ contract GambleHouse {
         emit LogDepositMade(msg.sender, msg.value, address(this).balance);
     }
 
+    /*Called by the bookmaker to set the mapping between participant
+     address and amount returned to him. This includes rewards and remaining deposit.*/
     function setRewards(address[] memory partAddr, uint[] memory rewards) public onlyBookmaker {
 
         for (uint i=0; i<partAddr.length; i++) {
@@ -112,6 +118,8 @@ contract GambleHouse {
 
     }
 
+    /*Distribute rewards according to the mapping defined by
+     the rewardDistribution object.*/
     function distributeRewards() public onlyBookmaker {
 
         for (uint i=0; i<participantAddresses.length; i++) {
@@ -122,7 +130,7 @@ contract GambleHouse {
 
     }
 
-
+    /*Read hash commitments of participants along with their public keys*/
     function readParticipants() public view onlyBookmaker returns(address[] memory,
        uint[] memory, uint[] memory, uint[] memory, uint[] memory,
        string[] memory, string[] memory) {
@@ -149,25 +157,27 @@ contract GambleHouse {
         return (_addr, _deposit, _iv, _data_bet, _data_choice, _pub_key1, _pub_key2);
     }
 
+    /*Used by bookmaker to get his public/private keys*/
     function getBookmakerKeys() public view onlyBookmaker returns(uint ,
        string memory, string memory ){
 
          return (bookmakerPrivKey, bookmakerPubKey[0], bookmakerPubKey[1]);
     }
 
+    /*Get public key of bookmaker*/
     function getBookmakerPubKey() public view  returns(
        string memory, string memory){
-
          return (bookmakerPubKey[0], bookmakerPubKey[1]);
     }
 
+    /*Update odds and change minimum Bet.*/
     function updateOdds(uint _odds_0, uint _odds_1, uint _minBet) public onlyBookmaker {
-
       gameInfo.odds_0 = _odds_0;
       gameInfo.odds_1 = _odds_1;
       minBet = _minBet;
     }
 
+    /*Get all necessary info about this betting session*/
     function getGameInfo() public view returns(uint, uint, uint, uint, uint,
                                   string memory, string memory, string memory,
                                   string memory, uint, uint, bool) {
@@ -179,6 +189,7 @@ contract GambleHouse {
 
     }
 
+    /*Retrieve min bets.*/
     function getMinBet() public view returns(uint) {
 
       return minBet;
