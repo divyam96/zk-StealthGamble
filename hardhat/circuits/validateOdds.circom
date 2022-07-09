@@ -12,6 +12,9 @@ include "./decrypt.circom";
 
 // Prove that the revealed secret and value correspond to the blinded bet
 template ValidateOdds (nBets) {
+
+
+    // Temporarily Diabled in-circuit decryption due to https://github.com/privacy-scaling-explorations/maci/issues/460
     // blindedBetsChoices[i] is an EDcH encrypted value of [bet, choice]
     // signal input blindedBetsChoices[nBets][3];
 
@@ -26,6 +29,7 @@ template ValidateOdds (nBets) {
     signal input betsChoices[nBets][2];
     signal input odds0;
     signal input odds1;
+
     // shared keys for edsa decryption
     // signal input sharedKeys[nBets];
 
@@ -46,7 +50,7 @@ template ValidateOdds (nBets) {
     var choice_1_sum = 0;
     var valid = 0;
 
-    //Validate if inputs are <= Deposit amount.
+    //Validate if inputs are <= Deposit amount and greater than min Bet.
     for (var j = 0; j < nBets; j++) {
 
         lessEqComparator[j] = LessEqThan(32);
@@ -61,6 +65,10 @@ template ValidateOdds (nBets) {
     }
 
     for (var i = 0; i < nBets; i++) {
+
+          // Commenting out the part where decryption happens in circom
+          // until MACI resolves this issue https://github.com/privacy-scaling-explorations/maci/issues/460
+
 
           // decryptBetChoice[i] = Decrypt(2);
           // decryptBetChoice[i].message[0] <== blindedBetsChoices[i][0];
